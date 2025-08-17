@@ -44,18 +44,24 @@ const Index = () => {
   ];
 
   const calculateKaskoPrice = (company: any) => {
+    let annualPrice = 0;
+    
     // Проверяем индивидуальную цену для компании
     if (kaskoParams.companyPrices[company.name] && kaskoParams.companyPrices[company.name] !== '') {
-      return parseInt(kaskoParams.companyPrices[company.name]);
+      annualPrice = parseInt(kaskoParams.companyPrices[company.name]);
     }
     // Проверяем общую цену
-    if (kaskoParams.kaskoAnnualCost && kaskoParams.kaskoAnnualCost !== '') {
-      return parseInt(kaskoParams.kaskoAnnualCost);
+    else if (kaskoParams.kaskoAnnualCost && kaskoParams.kaskoAnnualCost !== '') {
+      annualPrice = parseInt(kaskoParams.kaskoAnnualCost);
     }
     // Генерируем случайную цену
-    const basePrice = Math.floor(Math.random() * 50000) + 30000;
-    const termMultiplier = company.maxTerm >= parseInt(kaskoParams.policyTerm) ? 1 : 1;
-    return basePrice * termMultiplier;
+    else {
+      annualPrice = Math.floor(Math.random() * 50000) + 30000;
+    }
+    
+    // Умножаем на количество лет
+    const policyYears = parseInt(kaskoParams.policyTerm);
+    return annualPrice * policyYears;
   };
 
   const updateCompanyPrice = (companyName: string, price: string) => {
@@ -296,6 +302,11 @@ const Index = () => {
                                     <p className="text-sm text-gray-600">
                                       Срок: {kaskoParams.policyTerm} {parseInt(kaskoParams.policyTerm) === 1 ? 'год' : 'лет'}
                                     </p>
+                                    {parseInt(kaskoParams.policyTerm) > 1 && (
+                                      <p className="text-xs text-blue-600">
+                                        {(price / parseInt(kaskoParams.policyTerm)).toLocaleString('ru-RU')} ₽/год
+                                      </p>
+                                    )}
                                     {!canIssueForTerm && (
                                       <Badge variant="destructive">
                                         Максимум {company.maxTerm} {company.maxTerm === 1 ? 'год' : 'лет'}
@@ -415,6 +426,24 @@ const Index = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="vinNumber">ВИН номер</Label>
+                    <Input
+                      id="vinNumber"
+                      value={kaskoParams.vinNumber}
+                      onChange={(e) => setKaskoParams({...kaskoParams, vinNumber: e.target.value})}
+                      placeholder="Введите ВИН номер"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="stateNumber">Гос. номер</Label>
+                    <Input
+                      id="stateNumber"
+                      value={kaskoParams.stateNumber}
+                      onChange={(e) => setKaskoParams({...kaskoParams, stateNumber: e.target.value})}
+                      placeholder="А000АА000"
+                    />
+                  </div>
                   <div>
                     <Label htmlFor="carBrand">Марка автомобиля</Label>
                     <Input
