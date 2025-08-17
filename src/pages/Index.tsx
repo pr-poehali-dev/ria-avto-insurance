@@ -27,7 +27,8 @@ const Index = () => {
     vinNumber: '',
     stateNumber: '',
     isCredit: false,
-    kaskoAnnualCost: ''
+    kaskoAnnualCost: '',
+    companyPrices: {} as Record<string, string>
   });
 
   const insuranceCompanies = [
@@ -43,12 +44,28 @@ const Index = () => {
   ];
 
   const calculateKaskoPrice = (company: any) => {
+    // Проверяем индивидуальную цену для компании
+    if (kaskoParams.companyPrices[company.name] && kaskoParams.companyPrices[company.name] !== '') {
+      return parseInt(kaskoParams.companyPrices[company.name]);
+    }
+    // Проверяем общую цену
     if (kaskoParams.kaskoAnnualCost && kaskoParams.kaskoAnnualCost !== '') {
       return parseInt(kaskoParams.kaskoAnnualCost);
     }
+    // Генерируем случайную цену
     const basePrice = Math.floor(Math.random() * 50000) + 30000;
     const termMultiplier = company.maxTerm >= parseInt(kaskoParams.policyTerm) ? 1 : 1;
     return basePrice * termMultiplier;
+  };
+
+  const updateCompanyPrice = (companyName: string, price: string) => {
+    setKaskoParams({
+      ...kaskoParams,
+      companyPrices: {
+        ...kaskoParams.companyPrices,
+        [companyName]: price
+      }
+    });
   };
 
   const currentDate = new Date();
@@ -202,8 +219,14 @@ const Index = () => {
                         <p><span className="font-medium">Марка:</span> {kaskoParams.carBrand || 'Не указана'}</p>
                         <p><span className="font-medium">Модель:</span> {kaskoParams.carModel || 'Не указана'}</p>
                         <p><span className="font-medium">Год выпуска:</span> {kaskoParams.carYear}</p>
+                        <p><span className="font-medium">Мощность:</span> {kaskoParams.enginePower || 'Не указана'} л.с.</p>
+                        <p><span className="font-medium">Стоимость:</span> {kaskoParams.carValue ? parseInt(kaskoParams.carValue).toLocaleString('ru-RU') : 'Не указана'} ₽</p>
                         <p><span className="font-medium">ВИН номер:</span> {kaskoParams.vinNumber || 'Не указан'}</p>
                         <p><span className="font-medium">Гос. номер:</span> {kaskoParams.stateNumber || 'Не указан'}</p>
+                        <p><span className="font-medium">Регион:</span> {kaskoParams.region}</p>
+                        <p><span className="font-medium">Возраст водителя:</span> {kaskoParams.driverAge} лет</p>
+                        <p><span className="font-medium">Стаж вождения:</span> {kaskoParams.drivingExperience} лет</p>
+                        <p><span className="font-medium">Количество водителей:</span> {kaskoParams.driversCount === 'unlimited' ? 'Без ограничений' : kaskoParams.driversCount}</p>
                       </div>
                     </div>
                     
@@ -236,10 +259,15 @@ const Index = () => {
                       </Select>
                     </div>
                     
-                    <Button className="w-full">
-                      <Icon name="Calculator" className="mr-2" size={16} />
-                      Пересчитать
-                    </Button>
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500 mb-2">
+                        Для изменения параметров автомобиля перейдите во вкладку "Параметры"
+                      </p>
+                      <Button className="w-full">
+                        <Icon name="Calculator" className="mr-2" size={16} />
+                        Пересчитать
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -470,7 +498,7 @@ const Index = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="kaskoAnnualCost">Ежегодная стоимость КАСКО (₽)</Label>
+                    <Label htmlFor="kaskoAnnualCost">Общая ежегодная стоимость КАСКО (₽)</Label>
                     <Input
                       id="kaskoAnnualCost"
                       value={kaskoParams.kaskoAnnualCost}
@@ -479,6 +507,28 @@ const Index = () => {
                     />
                     <p className="text-xs text-gray-500 mt-1">Если указано, эта сумма будет использована для всех компаний</p>
                   </div>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Индивидуальные цены по компаниям</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {insuranceCompanies.filter(c => c.kasko).map((company, index) => (
+                      <div key={index}>
+                        <Label htmlFor={`price-${company.name}`}>{company.name}</Label>
+                        <Input
+                          id={`price-${company.name}`}
+                          value={kaskoParams.companyPrices[company.name] || ''}
+                          onChange={(e) => updateCompanyPrice(company.name, e.target.value)}
+                          placeholder="Цена для этой компании"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Индивидуальные цены имеют приоритет над общей стоимостью
+                  </p>
                 </div>
                 
                 <Button className="w-full">
