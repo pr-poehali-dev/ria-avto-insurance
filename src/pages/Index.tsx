@@ -25,7 +25,9 @@ const Index = () => {
     driversCount: '1',
     policyTerm: '1',
     vinNumber: '',
-    stateNumber: ''
+    stateNumber: '',
+    isCredit: false,
+    kaskoAnnualCost: ''
   });
 
   const insuranceCompanies = [
@@ -41,6 +43,9 @@ const Index = () => {
   ];
 
   const calculateKaskoPrice = (company: any) => {
+    if (kaskoParams.kaskoAnnualCost && kaskoParams.kaskoAnnualCost !== '') {
+      return parseInt(kaskoParams.kaskoAnnualCost);
+    }
     const basePrice = Math.floor(Math.random() * 50000) + 30000;
     const termMultiplier = company.maxTerm >= parseInt(kaskoParams.policyTerm) ? 1 : 1;
     return basePrice * termMultiplier;
@@ -133,9 +138,6 @@ const Index = () => {
                             {company.osago && <Badge variant="outline">ОСАГО</Badge>}
                             {company.kasko && <Badge variant="outline">КАСКО</Badge>}
                           </div>
-                          <p className="text-sm text-gray-600">
-                            До {company.maxTerm} {company.maxTerm === 1 ? 'года' : 'лет'}
-                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -194,33 +196,30 @@ const Index = () => {
                     <CardTitle className="text-sm">Параметры расчета</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="vinNumber">ВИН номер</Label>
-                      <Input
-                        id="vinNumber"
-                        value={kaskoParams.vinNumber}
-                        onChange={(e) => setKaskoParams({...kaskoParams, vinNumber: e.target.value})}
-                        placeholder="Введите ВИН номер"
-                      />
+                    <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                      <h4 className="font-semibold text-sm">Основные параметры автомобиля:</h4>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-medium">Марка:</span> {kaskoParams.carBrand || 'Не указана'}</p>
+                        <p><span className="font-medium">Модель:</span> {kaskoParams.carModel || 'Не указана'}</p>
+                        <p><span className="font-medium">Год выпуска:</span> {kaskoParams.carYear}</p>
+                        <p><span className="font-medium">ВИН номер:</span> {kaskoParams.vinNumber || 'Не указан'}</p>
+                        <p><span className="font-medium">Гос. номер:</span> {kaskoParams.stateNumber || 'Не указан'}</p>
+                      </div>
                     </div>
+                    
                     <div>
-                      <Label htmlFor="stateNumber">Гос. номер</Label>
-                      <Input
-                        id="stateNumber"
-                        value={kaskoParams.stateNumber}
-                        onChange={(e) => setKaskoParams({...kaskoParams, stateNumber: e.target.value})}
-                        placeholder="А000АА000"
-                      />
+                      <Label htmlFor="isCredit">Автомобиль в кредите</Label>
+                      <Select value={kaskoParams.isCredit ? 'true' : 'false'} onValueChange={(value) => setKaskoParams({...kaskoParams, isCredit: value === 'true'})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="false">Нет, в собственности</SelectItem>
+                          <SelectItem value="true">Да, в кредите</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="carValue">Стоимость автомобиля</Label>
-                      <Input
-                        id="carValue"
-                        value={kaskoParams.carValue}
-                        onChange={(e) => setKaskoParams({...kaskoParams, carValue: e.target.value})}
-                        placeholder="1000000"
-                      />
-                    </div>
+                    
                     <div>
                       <Label htmlFor="policyTerm">Срок полиса</Label>
                       <Select value={kaskoParams.policyTerm} onValueChange={(value) => setKaskoParams({...kaskoParams, policyTerm: value})}>
@@ -236,9 +235,10 @@ const Index = () => {
                         </SelectContent>
                       </Select>
                     </div>
+                    
                     <Button className="w-full">
                       <Icon name="Calculator" className="mr-2" size={16} />
-                      Рассчитать
+                      Пересчитать
                     </Button>
                   </CardContent>
                 </Card>
@@ -273,6 +273,11 @@ const Index = () => {
                                         Максимум {company.maxTerm} {company.maxTerm === 1 ? 'год' : 'лет'}
                                       </Badge>
                                     )}
+                                    {(company.name === 'Ренессанс Страхование' || company.name === 'Тинькофф Страхование' || company.name === 'Росгосстрах') && (
+                                      <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
+                                        Только на 1 год с пролонгацией
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                                 <Button 
@@ -288,14 +293,22 @@ const Index = () => {
                       })}
                     </div>
 
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-semibold mb-2">Для оформления КАСКО на несколько лет потребуется:</h4>
-                      <ul className="text-sm space-y-1 list-disc list-inside">
-                        <li>паспорт страхователя</li>
-                        <li>СТС или ПТС автомобиля</li>
-                        <li>водительские удостоверения допущенных лиц</li>
-                        <li>информация о комплектации и охранных системах</li>
-                      </ul>
+                    <div className="mt-6 space-y-4">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-center text-blue-800">
+                          Данные предложения действуют только через официального партнера «Риа-Авто», сроком действия предложений один рабочий день.
+                        </p>
+                      </div>
+                      
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">Для оформления КАСКО на несколько лет потребуется:</h4>
+                        <ul className="text-sm space-y-1 list-disc list-inside">
+                          <li>паспорт страхователя</li>
+                          <li>СТС или ПТС автомобиля</li>
+                          <li>водительские удостоверения допущенных лиц</li>
+                          <li>информация о комплектации и охранных системах</li>
+                        </ul>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -455,6 +468,16 @@ const Index = () => {
                         <SelectItem value="unlimited">Без ограничений</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="kaskoAnnualCost">Ежегодная стоимость КАСКО (₽)</Label>
+                    <Input
+                      id="kaskoAnnualCost"
+                      value={kaskoParams.kaskoAnnualCost}
+                      onChange={(e) => setKaskoParams({...kaskoParams, kaskoAnnualCost: e.target.value})}
+                      placeholder="Например: 45000"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Если указано, эта сумма будет использована для всех компаний</p>
                   </div>
                 </div>
                 
